@@ -26,10 +26,20 @@ export const weekStartOf = (startDate: string, week: number) => addDays(mondayOf
 
 export const isoToDateStr = (iso: string) => toDateStr(new Date(iso))
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTHS = {
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  es: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+}
+const DOW = {
+  en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  es: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+}
+let locale: 'en' | 'es' = 'en'
+export const setDateLocale = (l: 'en' | 'es') => {
+  locale = l
+}
 export const fmtShort = (s: string) => {
   const d = parseDate(s)
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}`
+  return `${d.getDate()} ${MONTHS[locale][d.getMonth()]}`
 }
-export const fmtDay = (s: string) => `${DOW[parseDate(s).getDay()]} ${fmtShort(s)}`
+export const fmtDay = (s: string) => `${DOW[locale][parseDate(s).getDay()]} ${fmtShort(s)}`

@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useT } from '../i18n'
 
 export interface Series {
   label: string
@@ -7,12 +8,13 @@ export interface Series {
   dashed?: boolean
 }
 
-const fmtTick = (t: number) => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+const fmtTick = (ts: number, lang: string) => new Date(ts).toLocaleDateString(lang, { day: 'numeric', month: 'short' })
 
 export default function LineChart({ series, height = 200, unit = 'kg' }: { series: Series[]; height?: number; unit?: string }) {
+  const { t, lang } = useT()
   const gid = useId().replace(/:/g, '')
   const all = series.flatMap((s) => s.points)
-  if (all.length === 0) return <div className="muted sm">No data yet.</div>
+  if (all.length === 0) return <div className="muted sm">{t('No data yet.')}</div>
   const W = 340
   const H = height
   const pad = { l: 36, r: 8, t: 10, b: 24 }
@@ -50,10 +52,10 @@ export default function LineChart({ series, height = 200, unit = 'kg' }: { serie
           </g>
         ))}
         <text x={pad.l} y={H - 6} fill="var(--muted)" fontSize="10" fontFamily="var(--mono)">
-          {fmtTick(x0)}
+          {fmtTick(x0, lang)}
         </text>
         <text x={W - pad.r} y={H - 6} textAnchor="end" fill="var(--muted)" fontSize="10" fontFamily="var(--mono)">
-          {fmtTick(x1)}
+          {fmtTick(x1, lang)}
         </text>
         {area && area.points.length > 1 && (
           <polygon

@@ -5,13 +5,18 @@ import { fmtDay, isoToDateStr } from '../lib/dates'
 import { lastPerformance, suggest } from '../lib/logic'
 import { primeAudio, restOverAlert } from '../lib/alert'
 import { fmtSets } from './Preview'
+import { useT, type T } from '../i18n'
 import type { ExerciseLog } from '../types'
+import ReferenceBar from './ReferenceBar'
+import { referenceFor } from '../lib/references'
+import { est1RM } from '../lib/logic'
 import { IconCheck, IconChevronDown, IconChevronLeft, IconMinus, IconPlus } from './Icons'
 
 const num = (v: string): number | null => (v === '' || isNaN(Number(v)) ? null : Number(v))
 
 export default function Workout({ onExit }: { onExit: () => void }) {
   const { state, update, updateActive } = useStore()
+  const { t } = useT()
   const active = state.active!
   const [rest, setRest] = useState<{ endsAt: number; total: number } | null>(null)
   const [warmOpen, setWarmOpen] = useState(true)
@@ -53,12 +58,12 @@ export default function Workout({ onExit }: { onExit: () => void }) {
   const finish = () => {
     const anyDone = active.exercises.some((e) => e.sets.some((s) => s.done))
     if (!anyDone) {
-      if (!confirm('No sets are checked. Discard this workout?')) return
+      if (!confirm(t('No sets are checked. Discard this workout?'))) return
       update((s) => ({ ...s, active: null }))
       onExit()
       return
     }
-    if (!confirm('Finish workout and save it?')) return
+    if (!confirm(t('Finish workout and save it?'))) return
     update((s) => ({
       ...s,
       sessions: [...s.sessions, { ...active, finished: true, finishedAt: new Date().toISOString() }],
@@ -68,7 +73,7 @@ export default function Workout({ onExit }: { onExit: () => void }) {
   }
 
   const discard = () => {
-    if (!confirm('Discard this workout? Nothing will be saved.')) return
+    if (!confirm(t('Discard this workout? Nothing will be saved.'))) return
     update((s) => ({ ...s, active: null }))
     onExit()
   }
@@ -76,23 +81,23 @@ export default function Workout({ onExit }: { onExit: () => void }) {
   return (
     <div className="app">
       <main className="page workout">
-        <header className="top bar">
+        <header className="top nav">
           <button className="iconlink back" onClick={onExit}>
-            <IconChevronLeft /> Home
+            <IconChevronLeft /> {t('Home')}
           </button>
           <button className="textbtn danger" onClick={discard}>
-            Discard
+            {t('Discard')}
           </button>
         </header>
         <div className="titleblock">
-          <div className="eyebrow">{active.deload ? 'Deload session' : 'Session'}</div>
-          <h1>{active.dayName}</h1>
+          <div className="eyebrow">{active.deload ? t('Deload session') : t('Session')}</div>
+          <h1>{t(active.dayName)}</h1>
         </div>
 
         <section className="card warm">
           <button className="foldhead" onClick={() => setWarmOpen((o) => !o)}>
             <span>
-              <span className="eyebrow">Warm-up</span>
+              <span className="eyebrow">{t('Warm-up')}</span>
               <b className="mono"> {warmDone}/{warm.length}</b>
             </span>
             <IconChevronDown open={warmOpen} />
@@ -112,7 +117,7 @@ export default function Workout({ onExit }: { onExit: () => void }) {
                   }
                 />
                 <span className="box">{active.warmup[i] && <IconCheck size={14} />}</span>
-                <span>{w}</span>
+                <span>{t(w)}</span>
               </label>
             ))}
         </section>
@@ -131,7 +136,7 @@ export default function Workout({ onExit }: { onExit: () => void }) {
         ))}
 
         <button className="btn primary wide lg finish" onClick={finish}>
-          Finish workout <IconCheck size={18} />
+          {t('Finish workout')} <IconCheck size={18} />
         </button>
         <div style={{ height: rest ? 110 : 20 }} />
       </main>
@@ -152,9 +157,16 @@ function ExerciseCard({
   onSetDone: () => void
 }) {
   const { state } = useStore()
+  const { t } = useT()
   const last = lastPerformance(state.sessions, ex.name)
-  const sug = suggest({ name: ex.name, sets: ex.target.sets, repMax: ex.target.repMax, region: ex.region, timed: ex.timed }, last)
+  const sug = suggest({ name: ex.name, sets: ex.target.sets, repMax: ex.target.repMax, region: ex.region, timed: ex.timed }, last, t)
   const lastSets = last?.log.sets.filter((s) => s.done) ?? []
+  const ref = referenceFor(ex.name)
+  const [refOpen, setRefOpen] = useState(false)
+  const bestE1rm = (() => {
+    const sets = (last?.log.sets ?? []).filter((s) => s.done && (s.weight ?? 0) > 0 && (s.reps ?? 0) > 0)
+    return sets.length ? Math.max(...sets.map((s) => est1RM(s.weight!, s.reps!))) : null
+  })()
   const target = ex.target.repMin === ex.target.repMax ? `${ex.target.repMax}` : `${ex.target.repMin}–${ex.target.repMax}`
 
   const patch = (i: number, p: Partial<ExerciseLog['sets'][number]>) =>
@@ -188,34 +200,44 @@ function ExerciseCard({
       <div className="exhead">
         <span className="idx">{String(index + 1).padStart(2, '0')}</span>
         <div className="grow">
-          <div className="title">{ex.name}</div>
+          <div className="title">{t(ex.name)}</div>
           <div className="meta">
             <span className="pill">
               {ex.target.sets} × {target}
               {ex.timed ? ' s' : ''}
             </span>
-            {ex.note && <span className="muted sm">{ex.note}</span>}
+            {ex.note && <span className="muted sm">{t(ex.note)}</span>}
           </div>
         </div>
       </div>
       {last && (
         <div className="muted sm lastline">
-          Last {fmtDay(isoToDateStr(last.session.date))} · <span className="mono">{fmtSets(last.log.sets, last.log.timed)}</span>
+          {t('Last {date}', { date: fmtDay(isoToDateStr(last.session.date)) })} · <span className="mono">{fmtSets(last.log.sets, last.log.timed, t)}</span>
         </div>
       )}
       <div className={`hint ${sug.increase ? 'up' : ''}`}>
         <span>{sug.text}</span>
         {sug.weight != null && (
           <button className="textbtn" onClick={applySuggestion}>
-            Use {sug.weight} kg
+            {t('Use {w} kg', { w: sug.weight })}
           </button>
         )}
       </div>
 
+      {ref && (
+        <div className="refwrap">
+          <button className="foldhead small" onClick={() => setRefOpen((o) => !o)}>
+            <span className="eyebrow">{t('Reference')}</span>
+            <IconChevronDown open={refOpen} />
+          </button>
+          {refOpen && <ReferenceBar reference={ref} e1rm={bestE1rm} />}
+        </div>
+      )}
+
       <div className="setgrid head">
-        <span>SET</span>
+        <span>{t('SET')}</span>
         <span>{ex.timed ? '+KG' : 'KG'}</span>
-        <span>{ex.timed ? 'SEC' : 'REPS'}</span>
+        <span>{ex.timed ? t('SEC') : t('REPS')}</span>
         <span>RIR</span>
         <span />
       </div>
@@ -248,7 +270,7 @@ function ExerciseCard({
               </option>
             ))}
           </select>
-          <button className={`tick ${s.done ? 'on' : ''}`} onClick={() => toggle(i)} aria-label={`Set ${i + 1} done`}>
+          <button className={`tick ${s.done ? 'on' : ''}`} onClick={() => toggle(i)} aria-label={t('Set {n} done', { n: i + 1 })}>
             <IconCheck size={22} />
           </button>
         </div>
@@ -263,11 +285,11 @@ function ExerciseCard({
             }))
           }
         >
-          <IconPlus /> Set
+          <IconPlus /> {t('Set')}
         </button>
         {ex.sets.length > 1 && (
           <button className="pillbtn" onClick={() => onChange((e) => ({ ...e, sets: e.sets.slice(0, -1) }))}>
-            <IconMinus /> Set
+            <IconMinus /> {t('Set')}
           </button>
         )}
       </div>
@@ -282,6 +304,7 @@ function RestBar({
   rest: { endsAt: number; total: number }
   onChange: (r: { endsAt: number; total: number } | null) => void
 }) {
+  const { t } = useT()
   const [, tick] = useState(0)
   const fired = useRef<number | null>(null)
   useEffect(() => {
@@ -304,8 +327,8 @@ function RestBar({
       <div className="restprog" style={{ width: `${(1 - pct) * 100}%` }} />
       <div className="restrow">
         <div className="restlabel">
-          <span className="eyebrow">{over ? 'Rest over' : 'Rest'}</span>
-          <div className="clock">{over ? 'GO' : `${mm}:${ss}`}</div>
+          <span className="eyebrow">{over ? t('Rest over') : t('Rest')}</span>
+          <div className="clock">{over ? t('GO') : `${mm}:${ss}`}</div>
         </div>
         <button className="pillbtn" onClick={() => onChange({ ...rest, endsAt: rest.endsAt - 15000 })}>
           −15
@@ -314,7 +337,7 @@ function RestBar({
           +15
         </button>
         <button className="btn primary sm" onClick={() => onChange(null)}>
-          {over ? 'Dismiss' : 'Skip'}
+          {over ? t('Dismiss') : t('Skip')}
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { addDays, fmtDay, fmtShort, isoToDateStr, mondayOf, todayStr, weekOf, we
 import { phaseOf } from '../lib/defaults'
 import { cardioInWeekStart, deloadStatus, sessionsInWeekStart } from '../lib/logic'
 import { IconArrow, IconCheck, IconChevronRight } from './Icons'
+import { useT } from '../i18n'
 
 interface Props {
   onPreview: (dayId: string) => void
@@ -23,6 +24,7 @@ export function Segs({ n, total }: { n: number; total: number }) {
 
 export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props) {
   const { state, update } = useStore()
+  const { t, lang } = useT()
   const today = todayStr()
   const week = weekOf(state.settings.startDate, today)
   const ws = mondayOf(today)
@@ -43,32 +45,41 @@ export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props
       <header className="top">
         <div>
           <div className="eyebrow">
-            {started ? `${phase.name} · ${fmtShort(ws)} – ${fmtShort(addDays(ws, 6))}` : 'Program not started'}
+            {started ? `${t(phase.name)} · ${fmtShort(ws)} – ${fmtShort(addDays(ws, 6))}` : t('Program not started')}
           </div>
           <h1>
             {started ? (
               <>
-                Week {String(week).padStart(2, '0')}
+                {t('Week {n}', { n: String(week).padStart(2, '0') })}
                 {week <= 24 && <span className="of"> / 24</span>}
               </>
             ) : (
-              <>Starts {fmtDay(weekStartOf(state.settings.startDate, 1))}</>
+              <>{t('Starts {date}', { date: fmtDay(weekStartOf(state.settings.startDate, 1)) })}</>
             )}
           </h1>
         </div>
-        <button className="iconlink" onClick={() => goTab('program')}>
-          Program <IconChevronRight />
-        </button>
+        <div className="headtools">
+          <div className="langswitch" role="group" aria-label="Language">
+            {(['en', 'es'] as const).map((l) => (
+              <button key={l} className={lang === l ? 'on' : ''} onClick={() => update((s) => ({ ...s, settings: { ...s.settings, lang: l } }))}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <button className="iconlink" onClick={() => goTab('program')}>
+            {t('Program')} <IconChevronRight />
+          </button>
+        </div>
       </header>
 
       {state.active && (
         <section className="notice live">
           <div>
-            <div className="eyebrow">In progress</div>
+            <div className="eyebrow">{t('In progress')}</div>
             <b>{state.active.dayName}</b>
           </div>
           <button className="btn primary sm" onClick={onResume}>
-            Resume
+            {t('Resume')}
           </button>
         </section>
       )}
@@ -76,26 +87,26 @@ export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props
       {dl.isDeloadWeek && (
         <section className="notice warn">
           <div>
-            <div className="eyebrow">Deload week</div>
-            <p>Sets cut by about 40%. Keep the loads, leave reps in reserve.</p>
+            <div className="eyebrow">{t('Deload week')}</div>
+            <p>{t('Sets cut by about 40%. Keep the loads, leave reps in reserve.')}</p>
           </div>
           <button className="textbtn" onClick={cancelDeload}>
-            Cancel
+            {t('Cancel')}
           </button>
         </section>
       )}
       {dl.due && (
         <section className="notice warn stack">
           <div>
-            <div className="eyebrow">Deload recommended</div>
-            <p>{dl.weeksSince} training weeks since your last deload. Cut sets by about 40% this week?</p>
+            <div className="eyebrow">{t('Deload recommended')}</div>
+            <p>{t('{n} training weeks since your last deload. Cut sets by about 40% this week?', { n: dl.weeksSince })}</p>
           </div>
           <div className="row gap">
             <button className="btn primary sm" onClick={accept}>
-              Accept deload
+              {t('Accept deload')}
             </button>
             <button className="btn ghost sm" onClick={postpone} disabled={!dl.canPostpone}>
-              {dl.canPostpone ? 'Postpone' : 'Cannot postpone'}
+              {dl.canPostpone ? t('Postpone') : t('Cannot postpone')}
             </button>
           </div>
         </section>
@@ -105,22 +116,22 @@ export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props
         <section className="hero">
           {next ? (
             <>
-              <div className="eyebrow">Next session{dl.isDeloadWeek ? ' · deload' : ''}</div>
-              <div className="hero-title">{next.name}</div>
+              <div className="eyebrow">{t('Next session')}{dl.isDeloadWeek ? ` · ${t('deload')}` : ''}</div>
+              <div className="hero-title">{t(next.name)}</div>
               <div className="hero-meta">
-                <span>{next.exercises.length} exercises</span>
+                <span>{t('{n} exercises', { n: next.exercises.length })}</span>
                 <span>~90 min</span>
               </div>
               <button className="btn primary wide lg" onClick={() => onQuickStart(next.id)}>
-                Start workout <IconArrow />
+                {t('Start workout')} <IconArrow />
               </button>
             </>
           ) : (
             <>
-              <div className="eyebrow">Week complete</div>
-              <div className="hero-title">All four sessions done</div>
+              <div className="eyebrow">{t('Week complete')}</div>
+              <div className="hero-title">{t('All four sessions done')}</div>
               <div className="hero-meta">
-                <span>Add cardio or repeat any day below</span>
+                <span>{t('Add cardio or repeat any day below')}</span>
               </div>
             </>
           )}
@@ -129,7 +140,7 @@ export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props
 
       <section className="stats">
         <div>
-          <div className="eyebrow">Lifting</div>
+          <div className="eyebrow">{t('Lifting')}</div>
           <div className="num">
             {done.length}
             <span>/4</span>
@@ -137,7 +148,7 @@ export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props
           <Segs n={done.length} total={4} />
         </div>
         <div>
-          <div className="eyebrow">Cardio</div>
+          <div className="eyebrow">{t('Cardio')}</div>
           <div className="num">
             {cardio.length}
             <span>/3</span>
@@ -146,7 +157,7 @@ export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props
         </div>
       </section>
 
-      <h2 className="sec">This week</h2>
+      <h2 className="sec">{t('This week')}</h2>
       <section className="list">
         {state.plan.map((d, i) => {
           const s = done.find((x) => x.dayId === d.id)
@@ -154,29 +165,29 @@ export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props
             <div className="li" key={d.id}>
               <span className={`dot ${s ? 'on' : ''}`}>{s ? <IconCheck size={14} /> : i + 1}</span>
               <div className="grow">
-                <div className="li-title">{d.name}</div>
-                <div className="muted sm">{s ? `Done ${fmtDay(isoToDateStr(s.date))}` : `${d.exercises.length} exercises`}</div>
+                <div className="li-title">{t(d.name)}</div>
+                <div className="muted sm">{s ? t('Done {date}', { date: fmtDay(isoToDateStr(s.date)) }) : t('{n} exercises', { n: d.exercises.length })}</div>
               </div>
               <button className="textbtn" onClick={() => onPreview(d.id)} disabled={!!state.active}>
-                {s ? 'Repeat' : 'Preview'}
+                {s ? t('Repeat') : t('Preview')}
               </button>
             </div>
           )
         })}
       </section>
 
-      <h2 className="sec">Cardio</h2>
+      <h2 className="sec">{t('Cardio')}</h2>
       <section className="list">
-        {cardio.length === 0 && <div className="li muted sm">Nothing logged. Target: 2 Zone 2 sessions plus 1 optional.</div>}
+        {cardio.length === 0 && <div className="li muted sm">{t('Nothing logged. Target: 2 Zone 2 sessions plus 1 optional.')}</div>}
         {cardio.map((c) => (
           <div key={c.id} className="li">
             <div className="grow">
-              <div className="li-title cap">{c.type}</div>
+              <div className="li-title cap">{t(c.type)}</div>
               <div className="muted sm">{fmtDay(c.date)}</div>
             </div>
             <div className="right">
               <div className="mono">{c.minutes} min</div>
-              <div className="muted sm">{c.mode === 'zone2' ? 'Zone 2' : 'Intervals'}</div>
+              <div className="muted sm">{c.mode === 'zone2' ? t('Zone 2') : t('Intervals')}</div>
             </div>
           </div>
         ))}
