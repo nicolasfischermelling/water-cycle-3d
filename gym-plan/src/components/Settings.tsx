@@ -34,7 +34,7 @@ export default function Settings() {
 
   return (
     <>
-      <header className="hdr">
+      <header className="top">
         <h1>Settings & data</h1>
       </header>
       <div className="card form">
@@ -68,7 +68,7 @@ export default function Settings() {
         </label>
       </div>
 
-      <h2>Backup</h2>
+      <h2 className="sec">Backup</h2>
       <div className="card form">
         <div className="muted">All data lives only on this device. Export a backup regularly.</div>
         <button className="btn primary wide" onClick={exportData}>

@@ -9,7 +9,7 @@ export default function Program() {
   const dl = deloadStatus(state, Math.max(1, cur))
   return (
     <>
-      <header className="hdr">
+      <header className="top">
         <div>
           <h1>24-week program</h1>
           <div className="muted">
@@ -26,7 +26,7 @@ export default function Program() {
             <div className="muted">{p.desc}</div>
           </div>
         ))}
-        <div className="muted small">Next deload due around week {dl.nextDueWeek} (every {state.settings.deloadEvery} weeks, postpone up to 8).</div>
+        <div className="muted sm">Next deload due around week {dl.nextDueWeek} (every {state.settings.deloadEvery} weeks, postpone up to 8).</div>
       </div>
       {Array.from({ length: 24 }, (_, i) => i + 1).map((w) => {
         const ws = weekStartOf(state.settings.startDate, w)
@@ -43,11 +43,11 @@ export default function Program() {
                 {isDeload && <span className="tag">Deload</span>}
                 {!isDeload && w === dl.nextDueWeek && w >= cur && <span className="tag soft">Deload due</span>}
               </div>
-              <div className="muted small">
+              <div className="muted sm">
                 {fmtShort(ws)} – {fmtShort(addDays(ws, 6))}
               </div>
             </div>
-            <div className="muted small right">
+            <div className="muted sm right">
               {w <= cur ? `Lift ${lift}/4` : ''}
               <br />
               {w <= cur ? `Cardio ${cardio}` : ''}

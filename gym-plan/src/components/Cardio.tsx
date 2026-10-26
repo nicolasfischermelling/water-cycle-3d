@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { uid } from '../lib/defaults'
 import { fmtDay, mondayOf, todayStr } from '../lib/dates'
 import { cardioInWeekStart } from '../lib/logic'
+import { IconClose } from './Icons'
 import type { CardioMode, CardioType } from '../types'
 
 export default function Cardio() {
@@ -33,7 +34,7 @@ export default function Cardio() {
 
   return (
     <>
-      <header className="hdr">
+      <header className="top">
         <h1>Cardio</h1>
       </header>
       <div className="card">
@@ -80,7 +81,7 @@ export default function Cardio() {
           Log cardio
         </button>
       </div>
-      <h2>History</h2>
+      <h2 className="sec">History</h2>
       {[...state.cardio].reverse().map((c) => (
         <div className="card row between" key={c.id}>
           <div>
@@ -93,8 +94,8 @@ export default function Cardio() {
               {c.notes ? ` · ${c.notes}` : ''}
             </div>
           </div>
-          <button className="mini danger" onClick={() => confirm('Delete this entry?') && update((s) => ({ ...s, cardio: s.cardio.filter((x) => x.id !== c.id) }))}>
-            ✕
+          <button className="pillbtn danger icon" onClick={() => confirm('Delete this entry?') && update((s) => ({ ...s, cardio: s.cardio.filter((x) => x.id !== c.id) }))}>
+            <IconClose />
           </button>
         </div>
       ))}
