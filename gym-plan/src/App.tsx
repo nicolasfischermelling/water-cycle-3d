@@ -39,6 +39,7 @@ export default function App() {
   const startSession = (dayId: string, overrides: Record<string, number | null> = {}) => {
     const day = state.plan.find((d) => d.id === dayId)
     if (!day) return
+    if (state.active && !confirm(t('Replace the workout in progress? Its logged sets will be lost.'))) return
     const week = weekOf(state.settings.startDate, todayStr())
     update((s) => ({ ...s, active: buildSession(s, day, week, overrides) }))
     setView({ name: 'workout' })

@@ -168,7 +168,7 @@ export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props
                 <div className="li-title">{t(d.name)}</div>
                 <div className="muted sm">{s ? t('Done {date}', { date: fmtDay(isoToDateStr(s.date)) }) : t('{n} exercises', { n: d.exercises.length })}</div>
               </div>
-              <button className="textbtn" onClick={() => onPreview(d.id)} disabled={!!state.active}>
+              <button className="textbtn" onClick={() => onPreview(d.id)}>
                 {s ? t('Repeat') : t('Preview')}
               </button>
             </div>
