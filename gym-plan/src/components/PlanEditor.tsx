@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { defaultPlan, uid } from '../lib/defaults'
 import { MUSCLES, type ExerciseDef } from '../types'
+import { IconChevronDown, IconEdit, IconPlus } from './Icons'
 
 export default function PlanEditor() {
   const { state, update } = useStore()
@@ -15,7 +16,7 @@ export default function PlanEditor() {
 
   return (
     <>
-      <header className="hdr">
+      <header className="top">
         <h1>Plan</h1>
       </header>
       <p className="muted">Tap a day, then an exercise to rename, swap, or change sets and rep range. Changes apply to future workouts.</p>
@@ -23,7 +24,9 @@ export default function PlanEditor() {
         <div className="card" key={day.id}>
           <button className="row between plain" onClick={() => setOpen(open === day.id ? null : day.id)}>
             <span className="title">{day.name}</span>
-            <span className="muted">{day.exercises.length} exercises {open === day.id ? '▲' : '▼'}</span>
+            <span className="muted sm row gap0">
+              {day.exercises.length} exercises <IconChevronDown open={open === day.id} />
+            </span>
           </button>
           {open === day.id && (
             <>
@@ -45,7 +48,7 @@ export default function PlanEditor() {
                         {x.timed ? 's' : ''}
                       </span>
                     </span>
-                    <span className="muted">{edit === x.id ? '▲' : '✎'}</span>
+                    <span className="muted">{edit === x.id ? <IconChevronDown open /> : <IconEdit />}</span>
                   </button>
                   {edit === x.id && (
                     <div className="form">
@@ -100,14 +103,14 @@ export default function PlanEditor() {
                         <input value={x.note ?? ''} onChange={(e) => patchEx(day.id, x.id, { note: e.target.value })} />
                       </label>
                       <div className="row gap">
-                        <button className="mini" disabled={i === 0} onClick={() => patchDay(day.id, (xs) => swap(xs, i, i - 1))}>
-                          ▲ Up
+                        <button className="pillbtn" disabled={i === 0} onClick={() => patchDay(day.id, (xs) => swap(xs, i, i - 1))}>
+                          Move up
                         </button>
-                        <button className="mini" disabled={i === day.exercises.length - 1} onClick={() => patchDay(day.id, (xs) => swap(xs, i, i + 1))}>
-                          ▼ Down
+                        <button className="pillbtn" disabled={i === day.exercises.length - 1} onClick={() => patchDay(day.id, (xs) => swap(xs, i, i + 1))}>
+                          Move down
                         </button>
                         <button
-                          className="mini danger"
+                          className="pillbtn danger"
                           onClick={() => {
                             if (confirm(`Remove ${x.name}?`)) patchDay(day.id, (xs) => xs.filter((y) => y.id !== x.id))
                           }}
@@ -130,7 +133,7 @@ export default function PlanEditor() {
                   setEdit(id)
                 }}
               >
-                + Add exercise
+                <IconPlus /> Add exercise
               </button>
             </>
           )}

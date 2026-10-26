@@ -1,14 +1,24 @@
 import { useStore } from '../store'
-import { addDays, fmtDay, fmtShort, mondayOf, todayStr, weekOf, weekStartOf } from '../lib/dates'
+import { addDays, fmtDay, fmtShort, isoToDateStr, mondayOf, todayStr, weekOf, weekStartOf } from '../lib/dates'
 import { phaseOf } from '../lib/defaults'
 import { cardioInWeekStart, deloadStatus, sessionsInWeekStart } from '../lib/logic'
-import { isoToDateStr } from '../lib/dates'
+import { IconArrow, IconCheck, IconChevronRight } from './Icons'
 
 interface Props {
   onPreview: (dayId: string) => void
   onQuickStart: (dayId: string) => void
   onResume: () => void
   goTab: (t: 'program') => void
+}
+
+export function Segs({ n, total }: { n: number; total: number }) {
+  return (
+    <div className="segs" aria-hidden>
+      {Array.from({ length: total }, (_, i) => (
+        <i key={i} className={i < n ? 'on' : ''} />
+      ))}
+    </div>
+  )
 }
 
 export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props) {
@@ -30,140 +40,147 @@ export default function Home({ onPreview, onQuickStart, onResume, goTab }: Props
 
   return (
     <>
-      <header className="hdr">
+      <header className="top">
         <div>
-          <h1>{started ? (week <= 24 ? `Week ${week} of 24` : `Week ${week}`) : 'Starts soon'}</h1>
-          <div className="muted">
-            {started ? `${phase.name} · ${fmtShort(ws)} – ${fmtShort(addDays(ws, 6))}` : `Program starts ${fmtDay(weekStartOf(state.settings.startDate, 1))}`}
+          <div className="eyebrow">
+            {started ? `${phase.name} · ${fmtShort(ws)} – ${fmtShort(addDays(ws, 6))}` : 'Program not started'}
           </div>
+          <h1>
+            {started ? (
+              <>
+                Week {String(week).padStart(2, '0')}
+                {week <= 24 && <span className="of"> / 24</span>}
+              </>
+            ) : (
+              <>Starts {fmtDay(weekStartOf(state.settings.startDate, 1))}</>
+            )}
+          </h1>
         </div>
-        <button className="link" onClick={() => goTab('program')}>
-          Program ›
+        <button className="iconlink" onClick={() => goTab('program')}>
+          Program <IconChevronRight />
         </button>
       </header>
 
       {state.active && (
-        <div className="card accent">
-          <div className="row between">
-            <div>
-              <b>Workout in progress</b>
-              <div className="muted">{state.active.dayName}</div>
-            </div>
-            <button className="btn primary" onClick={onResume}>
-              Resume
-            </button>
+        <section className="notice live">
+          <div>
+            <div className="eyebrow">In progress</div>
+            <b>{state.active.dayName}</b>
           </div>
-        </div>
+          <button className="btn primary sm" onClick={onResume}>
+            Resume
+          </button>
+        </section>
       )}
 
       {dl.isDeloadWeek && (
-        <div className="card warn">
-          <b>Deload week</b>
-          <div className="muted">Sets are cut by ~40%. Keep loads, leave reps in reserve.</div>
-          <button className="btn small ghost" onClick={cancelDeload}>
-            Cancel deload
+        <section className="notice warn">
+          <div>
+            <div className="eyebrow">Deload week</div>
+            <p>Sets cut by about 40%. Keep the loads, leave reps in reserve.</p>
+          </div>
+          <button className="textbtn" onClick={cancelDeload}>
+            Cancel
           </button>
-        </div>
+        </section>
       )}
       {dl.due && (
-        <div className="card warn">
-          <b>Deload recommended</b>
-          <div className="muted">
-            {dl.weeksSince} training weeks since your last deload. Cut sets by ~40% this week?
+        <section className="notice warn stack">
+          <div>
+            <div className="eyebrow">Deload recommended</div>
+            <p>{dl.weeksSince} training weeks since your last deload. Cut sets by about 40% this week?</p>
           </div>
           <div className="row gap">
-            <button className="btn primary" onClick={accept}>
+            <button className="btn primary sm" onClick={accept}>
               Accept deload
             </button>
-            <button className="btn ghost" onClick={postpone} disabled={!dl.canPostpone}>
+            <button className="btn ghost sm" onClick={postpone} disabled={!dl.canPostpone}>
               {dl.canPostpone ? 'Postpone' : 'Cannot postpone'}
             </button>
           </div>
-        </div>
+        </section>
       )}
 
-      <div className="grid2">
-        <div className="card stat">
-          <div className="big">
-            {done.length}
-            <span>/4</span>
-          </div>
-          <div className="muted">Lifting this week</div>
-          <Bar v={done.length / 4} />
-        </div>
-        <div className="card stat">
-          <div className="big">
-            {cardio.length}
-            <span>/2–3</span>
-          </div>
-          <div className="muted">Cardio this week</div>
-          <Bar v={Math.min(1, cardio.length / 2)} />
-        </div>
-      </div>
-
       {!state.active && (
-        <div className="card">
+        <section className="hero">
           {next ? (
             <>
-              <div className="muted">Next suggested</div>
-              <div className="title">{next.name}</div>
-              <div className="muted">
-                {next.exercises.length} exercises · ~90 min
-                {dl.isDeloadWeek ? ' · deload' : ''}
+              <div className="eyebrow">Next session{dl.isDeloadWeek ? ' · deload' : ''}</div>
+              <div className="hero-title">{next.name}</div>
+              <div className="hero-meta">
+                <span>{next.exercises.length} exercises</span>
+                <span>~90 min</span>
               </div>
-              <button className="btn primary wide" onClick={() => onQuickStart(next.id)}>
-                Quick start
+              <button className="btn primary wide lg" onClick={() => onQuickStart(next.id)}>
+                Start workout <IconArrow />
               </button>
             </>
           ) : (
             <>
-              <div className="title">All 4 lifting sessions done</div>
-              <div className="muted">Add cardio, rest, or repeat any day below.</div>
+              <div className="eyebrow">Week complete</div>
+              <div className="hero-title">All four sessions done</div>
+              <div className="hero-meta">
+                <span>Add cardio or repeat any day below</span>
+              </div>
             </>
           )}
-        </div>
+        </section>
       )}
 
-      <h2>This week</h2>
-      {state.plan.map((d) => {
-        const s = done.find((x) => x.dayId === d.id)
-        return (
-          <div className="card row between" key={d.id}>
-            <div>
-              <div className="title">
-                {s ? '✅' : '⬜'} {d.name}
-              </div>
-              <div className="muted">{s ? `Done ${fmtDay(isoToDateStr(s.date))}` : `${d.exercises.length} exercises`}</div>
-            </div>
-            <button className="btn ghost" onClick={() => onPreview(d.id)} disabled={!!state.active}>
-              {s ? 'Repeat' : 'Preview'}
-            </button>
+      <section className="stats">
+        <div>
+          <div className="eyebrow">Lifting</div>
+          <div className="num">
+            {done.length}
+            <span>/4</span>
           </div>
-        )
-      })}
+          <Segs n={done.length} total={4} />
+        </div>
+        <div>
+          <div className="eyebrow">Cardio</div>
+          <div className="num">
+            {cardio.length}
+            <span>/3</span>
+          </div>
+          <Segs n={cardio.length} total={3} />
+        </div>
+      </section>
 
-      <h2>Cardio</h2>
-      <div className="card">
-        {cardio.length === 0 && <div className="muted">None logged this week. Target: 2 Zone 2 sessions + 1 optional.</div>}
+      <h2 className="sec">This week</h2>
+      <section className="list">
+        {state.plan.map((d, i) => {
+          const s = done.find((x) => x.dayId === d.id)
+          return (
+            <div className="li" key={d.id}>
+              <span className={`dot ${s ? 'on' : ''}`}>{s ? <IconCheck size={14} /> : i + 1}</span>
+              <div className="grow">
+                <div className="li-title">{d.name}</div>
+                <div className="muted sm">{s ? `Done ${fmtDay(isoToDateStr(s.date))}` : `${d.exercises.length} exercises`}</div>
+              </div>
+              <button className="textbtn" onClick={() => onPreview(d.id)} disabled={!!state.active}>
+                {s ? 'Repeat' : 'Preview'}
+              </button>
+            </div>
+          )
+        })}
+      </section>
+
+      <h2 className="sec">Cardio</h2>
+      <section className="list">
+        {cardio.length === 0 && <div className="li muted sm">Nothing logged. Target: 2 Zone 2 sessions plus 1 optional.</div>}
         {cardio.map((c) => (
-          <div key={c.id} className="row between line">
-            <span>
-              {fmtDay(c.date)} · {c.type}
-            </span>
-            <span className="muted">
-              {c.minutes} min · {c.mode === 'zone2' ? 'Zone 2' : 'Intervals'}
-            </span>
+          <div key={c.id} className="li">
+            <div className="grow">
+              <div className="li-title cap">{c.type}</div>
+              <div className="muted sm">{fmtDay(c.date)}</div>
+            </div>
+            <div className="right">
+              <div className="mono">{c.minutes} min</div>
+              <div className="muted sm">{c.mode === 'zone2' ? 'Zone 2' : 'Intervals'}</div>
+            </div>
           </div>
         ))}
-      </div>
+      </section>
     </>
-  )
-}
-
-function Bar({ v }: { v: number }) {
-  return (
-    <div className="bar">
-      <div style={{ width: `${Math.round(Math.min(1, v) * 100)}%` }} />
-    </div>
   )
 }

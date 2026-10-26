@@ -6,6 +6,7 @@ import { lastPerformance, suggest } from '../lib/logic'
 import { primeAudio, restOverAlert } from '../lib/alert'
 import { fmtSets } from './Preview'
 import type { ExerciseLog } from '../types'
+import { IconCheck, IconChevronDown, IconChevronLeft, IconMinus, IconPlus } from './Icons'
 
 const num = (v: string): number | null => (v === '' || isNaN(Number(v)) ? null : Number(v))
 
@@ -75,27 +76,30 @@ export default function Workout({ onExit }: { onExit: () => void }) {
   return (
     <div className="app">
       <main className="page workout">
-        <header className="hdr">
-          <button className="link" onClick={onExit}>
-            ‹ Home
+        <header className="top bar">
+          <button className="iconlink back" onClick={onExit}>
+            <IconChevronLeft /> Home
           </button>
-          <h1>{active.dayName}</h1>
-          <button className="link danger" onClick={discard}>
+          <button className="textbtn danger" onClick={discard}>
             Discard
           </button>
         </header>
-        {active.deload && <div className="card warn">Deload week: fewer sets, keep it smooth.</div>}
+        <div className="titleblock">
+          <div className="eyebrow">{active.deload ? 'Deload session' : 'Session'}</div>
+          <h1>{active.dayName}</h1>
+        </div>
 
-        <div className="card">
-          <button className="row between plain" onClick={() => setWarmOpen((o) => !o)}>
-            <b>
-              Warm-up · {warmDone}/{warm.length}
-            </b>
-            <span className="muted">{warmOpen ? '▲' : '▼'}</span>
+        <section className="card warm">
+          <button className="foldhead" onClick={() => setWarmOpen((o) => !o)}>
+            <span>
+              <span className="eyebrow">Warm-up</span>
+              <b className="mono"> {warmDone}/{warm.length}</b>
+            </span>
+            <IconChevronDown open={warmOpen} />
           </button>
           {warmOpen &&
             warm.map((w, i) => (
-              <label className="check" key={i}>
+              <label className={`check ${active.warmup[i] ? 'on' : ''}`} key={i}>
                 <input
                   type="checkbox"
                   checked={!!active.warmup[i]}
@@ -107,14 +111,16 @@ export default function Workout({ onExit }: { onExit: () => void }) {
                     })
                   }
                 />
+                <span className="box">{active.warmup[i] && <IconCheck size={14} />}</span>
                 <span>{w}</span>
               </label>
             ))}
-        </div>
+        </section>
 
         {active.exercises.map((ex, i) => (
           <ExerciseCard
             key={ex.exId}
+            index={i}
             ex={ex}
             onChange={(fn) => setEx(i, fn)}
             onSetDone={() => {
@@ -124,8 +130,8 @@ export default function Workout({ onExit }: { onExit: () => void }) {
           />
         ))}
 
-        <button className="btn primary wide" onClick={finish}>
-          Finish workout
+        <button className="btn primary wide lg finish" onClick={finish}>
+          Finish workout <IconCheck size={18} />
         </button>
         <div style={{ height: rest ? 110 : 20 }} />
       </main>
@@ -135,10 +141,12 @@ export default function Workout({ onExit }: { onExit: () => void }) {
 }
 
 function ExerciseCard({
+  index,
   ex,
   onChange,
   onSetDone,
 }: {
+  index: number
   ex: ExerciseLog
   onChange: (fn: (e: ExerciseLog) => ExerciseLog) => void
   onSetDone: () => void
@@ -176,31 +184,38 @@ function ExerciseCard({
   }
 
   return (
-    <div className="card">
-      <div className="title">{ex.name}</div>
-      <div className="muted">
-        {ex.target.sets} × {target}
-        {ex.timed ? ' s' : ' reps'}
-        {ex.note ? ` · ${ex.note}` : ''}
+    <section className="card ex">
+      <div className="exhead">
+        <span className="idx">{String(index + 1).padStart(2, '0')}</span>
+        <div className="grow">
+          <div className="title">{ex.name}</div>
+          <div className="meta">
+            <span className="pill">
+              {ex.target.sets} × {target}
+              {ex.timed ? ' s' : ''}
+            </span>
+            {ex.note && <span className="muted sm">{ex.note}</span>}
+          </div>
+        </div>
       </div>
       {last && (
-        <div className="muted small">
-          Last {fmtDay(isoToDateStr(last.session.date))}: {fmtSets(last.log.sets, last.log.timed)}
+        <div className="muted sm lastline">
+          Last {fmtDay(isoToDateStr(last.session.date))} · <span className="mono">{fmtSets(last.log.sets, last.log.timed)}</span>
         </div>
       )}
-      <div className={`chip ${sug.increase ? 'up' : ''}`}>
-        {sug.text}
+      <div className={`hint ${sug.increase ? 'up' : ''}`}>
+        <span>{sug.text}</span>
         {sug.weight != null && (
-          <button className="mini" onClick={applySuggestion}>
+          <button className="textbtn" onClick={applySuggestion}>
             Use {sug.weight} kg
           </button>
         )}
       </div>
 
       <div className="setgrid head">
-        <span>Set</span>
-        <span>{ex.timed ? '+kg' : 'kg'}</span>
-        <span>{ex.timed ? 'sec' : 'reps'}</span>
+        <span>SET</span>
+        <span>{ex.timed ? '+KG' : 'KG'}</span>
+        <span>{ex.timed ? 'SEC' : 'REPS'}</span>
         <span>RIR</span>
         <span />
       </div>
@@ -234,13 +249,13 @@ function ExerciseCard({
             ))}
           </select>
           <button className={`tick ${s.done ? 'on' : ''}`} onClick={() => toggle(i)} aria-label={`Set ${i + 1} done`}>
-            ✓
+            <IconCheck size={22} />
           </button>
         </div>
       ))}
       <div className="row gap">
         <button
-          className="mini"
+          className="pillbtn"
           onClick={() =>
             onChange((e) => ({
               ...e,
@@ -248,15 +263,15 @@ function ExerciseCard({
             }))
           }
         >
-          + set
+          <IconPlus /> Set
         </button>
         {ex.sets.length > 1 && (
-          <button className="mini" onClick={() => onChange((e) => ({ ...e, sets: e.sets.slice(0, -1) }))}>
-            − set
+          <button className="pillbtn" onClick={() => onChange((e) => ({ ...e, sets: e.sets.slice(0, -1) }))}>
+            <IconMinus /> Set
           </button>
         )}
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -285,17 +300,20 @@ function RestBar({
   const ss = String(Math.max(0, left) % 60).padStart(2, '0')
   const pct = Math.max(0, Math.min(1, left / rest.total))
   return (
-    <div className={`restbar ${over ? 'over' : ''}`}>
+    <div className={`restbar ${over ? 'over' : ''}`} role="timer">
       <div className="restprog" style={{ width: `${(1 - pct) * 100}%` }} />
       <div className="restrow">
-        <button className="btn ghost small" onClick={() => onChange({ ...rest, endsAt: rest.endsAt - 15000 })}>
+        <div className="restlabel">
+          <span className="eyebrow">{over ? 'Rest over' : 'Rest'}</span>
+          <div className="clock">{over ? 'GO' : `${mm}:${ss}`}</div>
+        </div>
+        <button className="pillbtn" onClick={() => onChange({ ...rest, endsAt: rest.endsAt - 15000 })}>
           −15
         </button>
-        <div className="clock">{over ? 'Go!' : `${mm}:${ss}`}</div>
-        <button className="btn ghost small" onClick={() => onChange({ endsAt: rest.endsAt + 15000, total: rest.total + 15 })}>
+        <button className="pillbtn" onClick={() => onChange({ endsAt: rest.endsAt + 15000, total: rest.total + 15 })}>
           +15
         </button>
-        <button className="btn small" onClick={() => onChange(null)}>
+        <button className="btn primary sm" onClick={() => onChange(null)}>
           {over ? 'Dismiss' : 'Skip'}
         </button>
       </div>

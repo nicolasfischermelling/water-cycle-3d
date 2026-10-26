@@ -5,6 +5,7 @@ import { addDays, fmtShort, mondayOf, parseDate, todayStr, weekOf } from '../lib
 import { cardioInWeekStart, exerciseHistory, loggedExerciseNames, sessionsInWeekStart, weeklyVolume } from '../lib/logic'
 import { MUSCLES } from '../types'
 import LineChart from './LineChart'
+import { IconChevronLeft, IconChevronRight, IconClose } from './Icons'
 
 export default function Progress() {
   const { state, update } = useStore()
@@ -52,11 +53,11 @@ export default function Progress() {
 
   return (
     <>
-      <header className="hdr">
+      <header className="top">
         <h1>Progress</h1>
       </header>
 
-      <h2>Strength</h2>
+      <h2 className="sec">Strength</h2>
       <div className="card">
         {names.length === 0 ? (
           <div className="muted">Finish a workout with weighted sets to see charts.</div>
@@ -70,26 +71,26 @@ export default function Progress() {
             <LineChart
               series={[
                 { label: 'Top weight', color: 'var(--accent)', points: hist.map((h) => ({ x: new Date(h.date).getTime(), y: h.topWeight })) },
-                { label: 'Est. 1RM', color: 'var(--blue)', points: hist.map((h) => ({ x: new Date(h.date).getTime(), y: Math.round(h.e1rm * 10) / 10 })) },
+                { label: 'Est. 1RM', color: 'var(--info)', points: hist.map((h) => ({ x: new Date(h.date).getTime(), y: Math.round(h.e1rm * 10) / 10 })) },
               ]}
             />
-            <div className="muted small">Estimated 1RM uses Epley: weight × (1 + reps/30), best set per session.</div>
+            <div className="muted sm">Estimated 1RM uses Epley: weight × (1 + reps/30), best set per session.</div>
           </>
         )}
       </div>
 
-      <h2>Weekly volume</h2>
+      <h2 className="sec">Weekly volume</h2>
       <div className="card">
         <div className="row between">
-          <button className="mini" onClick={() => setOff(off - 1)}>
-            ‹
+          <button className="pillbtn icon" onClick={() => setOff(off - 1)} aria-label="Previous week">
+            <IconChevronLeft />
           </button>
           <b>
             {fmtShort(ws)} – {fmtShort(addDays(ws, 6))}
             {off === 0 ? ' (this week)' : ''}
           </b>
-          <button className="mini" onClick={() => setOff(Math.min(0, off + 1))} disabled={off === 0}>
-            ›
+          <button className="pillbtn icon" onClick={() => setOff(Math.min(0, off + 1))} disabled={off === 0} aria-label="Next week">
+            <IconChevronRight />
           </button>
         </div>
         {MUSCLES.map((m) => (
@@ -105,7 +106,7 @@ export default function Progress() {
         ))}
       </div>
 
-      <h2>Adherence</h2>
+      <h2 className="sec">Adherence</h2>
       <div className="card">
         {adherence.map((a) => (
           <div className="volrow" key={a.w}>
@@ -120,7 +121,7 @@ export default function Progress() {
         ))}
       </div>
 
-      <h2>Body weight</h2>
+      <h2 className="sec">Body weight</h2>
       <div className="card">
         <div className="grid3">
           <label className="field">
@@ -143,7 +144,7 @@ export default function Progress() {
         <LineChart
           series={[
             { label: 'Body weight', color: 'var(--accent)', points: bwPoints },
-            { label: `Target ${target}`, color: 'var(--amber)', points: targetLine, dashed: true },
+            { label: `Target ${target}`, color: 'var(--warn)', points: targetLine, dashed: true },
           ]}
         />
         {[...weights].reverse().slice(0, 5).map((w) => (
@@ -151,8 +152,8 @@ export default function Progress() {
             <span>{fmtShort(w.date)}</span>
             <span>
               {w.kg} kg{' '}
-              <button className="mini danger" onClick={() => update((s) => ({ ...s, weights: s.weights.filter((x) => x.id !== w.id) }))}>
-                ✕
+              <button className="pillbtn danger icon" onClick={() => update((s) => ({ ...s, weights: s.weights.filter((x) => x.id !== w.id) }))} aria-label="Delete">
+                <IconClose />
               </button>
             </span>
           </div>
