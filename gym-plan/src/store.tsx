@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { AppState, Session } from './types'
 import { defaultState } from './lib/defaults'
-import { mondayOf } from './lib/dates'
+import { mondayOf, setDateLocale } from './lib/dates'
 
 const KEY = 'gymplan.v1'
 
@@ -44,6 +44,10 @@ const Ctx = createContext<Store | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(load)
+  setDateLocale(state.settings.lang)
+  useEffect(() => {
+    document.documentElement.lang = state.settings.lang
+  }, [state.settings.lang])
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(state))

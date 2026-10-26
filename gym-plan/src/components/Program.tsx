@@ -1,19 +1,21 @@
 import { useStore } from '../store'
 import { PHASES, phaseOf } from '../lib/defaults'
 import { addDays, fmtShort, todayStr, weekOf, weekStartOf } from '../lib/dates'
+import { useT } from '../i18n'
 import { cardioInWeekStart, deloadStatus, sessionsInWeekStart } from '../lib/logic'
 
 export default function Program() {
   const { state } = useStore()
+  const { t } = useT()
   const cur = weekOf(state.settings.startDate, todayStr())
   const dl = deloadStatus(state, Math.max(1, cur))
   return (
     <>
       <header className="top">
         <div>
-          <h1>24-week program</h1>
+          <h1>{t('24-week program')}</h1>
           <div className="muted">
-            {cur < 1 ? 'Not started' : cur > 24 ? 'Program complete' : `Now: week ${cur} · ${phaseOf(cur).name}`}
+            {cur < 1 ? t('Not started') : cur > 24 ? t('Program complete') : t('Now: week {n} · {phase}', { n: cur, phase: t(phaseOf(cur).name) })}
           </div>
         </div>
       </header>
@@ -21,12 +23,12 @@ export default function Program() {
         {PHASES.map((p) => (
           <div key={p.name} className="phase">
             <b>
-              Weeks {p.from}–{p.to} · {p.name}
+              {t('Weeks {a}–{b} · {name}', { a: p.from, b: p.to, name: t(p.name) })}
             </b>
-            <div className="muted">{p.desc}</div>
+            <div className="muted">{t(p.desc)}</div>
           </div>
         ))}
-        <div className="muted sm">Next deload due around week {dl.nextDueWeek} (every {state.settings.deloadEvery} weeks, postpone up to 8).</div>
+        <div className="muted sm">{t('Next deload due around week {n} (every {k} weeks, postpone up to 8).', { n: dl.nextDueWeek, k: state.settings.deloadEvery })}</div>
       </div>
       {Array.from({ length: 24 }, (_, i) => i + 1).map((w) => {
         const ws = weekStartOf(state.settings.startDate, w)
@@ -36,21 +38,21 @@ export default function Program() {
         const past = w < cur
         return (
           <div key={w} className={`card weekrow ${w === cur ? 'now' : ''} ${past ? 'past' : ''}`}>
-            <div className="wk">W{w}</div>
+            <div className="wk">{t('W{n}', { n: w })}</div>
             <div className="grow">
               <div>
-                <b>{phaseOf(w).name}</b>
-                {isDeload && <span className="tag">Deload</span>}
-                {!isDeload && w === dl.nextDueWeek && w >= cur && <span className="tag soft">Deload due</span>}
+                <b>{t(phaseOf(w).name)}</b>
+                {isDeload && <span className="tag">{t('Deload')}</span>}
+                {!isDeload && w === dl.nextDueWeek && w >= cur && <span className="tag soft">{t('Deload due')}</span>}
               </div>
               <div className="muted sm">
                 {fmtShort(ws)} – {fmtShort(addDays(ws, 6))}
               </div>
             </div>
             <div className="muted sm right">
-              {w <= cur ? `Lift ${lift}/4` : ''}
+              {w <= cur ? t('Lift {n}/4', { n: lift }) : ''}
               <br />
-              {w <= cur ? `Cardio ${cardio}` : ''}
+              {w <= cur ? t('Cardio {n}', { n: cardio }) : ''}
             </div>
           </div>
         )

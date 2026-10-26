@@ -2,6 +2,7 @@ import type { AppState, DayDef, ExerciseDef, ExerciseLog, Muscle, Session, SetLo
 import { MUSCLES } from '../types'
 import { addDays, isoToDateStr, mondayOf, weekOf } from './dates'
 import { uid } from './defaults'
+import { translate, type T } from '../i18n'
 
 export const normName = (s: string) => s.trim().toLowerCase()
 
@@ -64,14 +65,20 @@ export interface Suggestion {
   increase: boolean
 }
 
-export function suggest(def: Pick<ExerciseDef, 'name' | 'sets' | 'repMax' | 'region' | 'timed'>, last: Last | null): Suggestion {
+const tEn: T = (k, p) => translate('en', k, p)
+
+export function suggest(
+  def: Pick<ExerciseDef, 'name' | 'sets' | 'repMax' | 'region' | 'timed'>,
+  last: Last | null,
+  t: T = tEn,
+): Suggestion {
   if (!last) {
     return {
       weight: null,
       increase: false,
       text: def.timed
-        ? 'No history yet. Start with a hold you can control.'
-        : 'No history yet. Pick a load you can lift for the top of the range with 2+ reps in reserve.',
+        ? t('No history yet. Start with a hold you can control.')
+        : t('No history yet. Pick a load you can lift for the top of the range with 2+ reps in reserve.'),
     }
   }
   const done = last.log.sets.filter((s) => s.done)
@@ -83,9 +90,7 @@ export function suggest(def: Pick<ExerciseDef, 'name' | 'sets' | 'repMax' | 'reg
     return {
       weight: null,
       increase: false,
-      text: allTop
-        ? 'Target held on every set. Add 5 s or a small load.'
-        : `Aim to hold ${def.repMax} s on every set.`,
+      text: allTop ? t('Target held on every set. Add 5 s or a small load.') : t('Aim to hold {n} s on every set.', { n: def.repMax }),
     }
   }
   if (allTop && rirOk) {
@@ -93,15 +98,15 @@ export function suggest(def: Pick<ExerciseDef, 'name' | 'sets' | 'repMax' | 'reg
     return {
       weight: top + inc,
       increase: true,
-      text: `All sets hit ${def.repMax} reps with RIR ≥ 1. Add ${inc} kg.`,
+      text: t('All sets hit {reps} reps with RIR ≥ 1. Add {inc} kg.', { reps: def.repMax, inc }),
     }
   }
   const repsStr = done.map((s) => s.reps ?? 0).join('/')
-  const why = allTop && !rirOk ? 'Top reps hit but RIR missing or 0.' : 'Add reps before adding load.'
+  const why = allTop && !rirOk ? t('Top reps hit but RIR missing or 0.') : t('Add reps before adding load.')
   return {
     weight: top > 0 ? top : null,
     increase: false,
-    text: `Keep ${top > 0 ? top + ' kg' : 'load'}. ${why} Last: ${repsStr}.`,
+    text: `${top > 0 ? t('Keep {w} kg.', { w: top }) : t('Keep load.')} ${why} ${t('Last: {r}.', { r: repsStr })}`,
   }
 }
 

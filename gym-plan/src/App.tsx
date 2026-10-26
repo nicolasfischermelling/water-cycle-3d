@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useStore } from './store'
 import { buildSession } from './lib/logic'
 import { todayStr, weekOf } from './lib/dates'
@@ -10,6 +10,7 @@ import Cardio from './components/Cardio'
 import Progress from './components/Progress'
 import Program from './components/Program'
 import Settings from './components/Settings'
+import { useT } from './i18n'
 import { IconCalendar, IconChart, IconGear, IconHome, IconPlan, IconPulse } from './components/Icons'
 
 type Tab = 'home' | 'plan' | 'cardio' | 'progress' | 'program' | 'settings'
@@ -26,8 +27,14 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
 
 export default function App() {
   const { state, update } = useStore()
+  const { t } = useT()
   const [tab, setTab] = useState<Tab>('home')
   const [view, setView] = useState<View>(state.active ? { name: 'workout' } : { name: 'tabs' })
+
+  // each screen starts at the top, otherwise headers stay scrolled out of view
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [view.name, tab])
 
   const startSession = (dayId: string, overrides: Record<string, number | null> = {}) => {
     const day = state.plan.find((d) => d.id === dayId)
@@ -65,10 +72,10 @@ export default function App() {
         {tab === 'settings' && <Settings />}
       </main>
       <nav className="tabbar" aria-label="Main">
-        {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)} aria-current={tab === t.id}>
-            {t.icon}
-            <span>{t.label}</span>
+        {TABS.map((tb) => (
+          <button key={tb.id} className={tab === tb.id ? 'on' : ''} onClick={() => setTab(tb.id)} aria-current={tab === tb.id}>
+            {tb.icon}
+            <span>{t(tb.label)}</span>
           </button>
         ))}
       </nav>

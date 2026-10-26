@@ -84,6 +84,7 @@ export interface Settings {
   restCompound: number
   restIsolation: number
   deloadEvery: number // 6-8
+  lang: 'en' | 'es'
 }
 
 export interface AppState {

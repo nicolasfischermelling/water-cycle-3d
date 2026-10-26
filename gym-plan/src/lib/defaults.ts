@@ -1,5 +1,6 @@
 import type { AppState, DayDef, ExerciseDef, Kind, Muscle, Region } from '../types'
 import { mondayOf, todayStr } from './dates'
+import { detectLang } from './lang'
 
 let n = 0
 export const uid = () => `${Date.now().toString(36)}${(n++).toString(36)}${Math.random().toString(36).slice(2, 6)}`
@@ -102,6 +103,7 @@ export const defaultState = (): AppState => ({
     restCompound: 120,
     restIsolation: 90,
     deloadEvery: 6,
+    lang: detectLang(),
   },
   deloads: [],
   postponedWeek: null,

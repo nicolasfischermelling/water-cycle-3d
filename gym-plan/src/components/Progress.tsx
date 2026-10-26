@@ -5,14 +5,20 @@ import { addDays, fmtShort, mondayOf, parseDate, todayStr, weekOf } from '../lib
 import { cardioInWeekStart, exerciseHistory, loggedExerciseNames, sessionsInWeekStart, weeklyVolume } from '../lib/logic'
 import { MUSCLES } from '../types'
 import LineChart from './LineChart'
+import { muscleKey, useT } from '../i18n'
+import ReferenceBar from './ReferenceBar'
+import { referenceFor } from '../lib/references'
 import { IconChevronLeft, IconChevronRight, IconClose } from './Icons'
 
 export default function Progress() {
   const { state, update } = useStore()
+  const { t, lang } = useT()
   const names = useMemo(() => loggedExerciseNames(state.sessions), [state.sessions])
   const [sel, setSel] = useState('')
   const exName = sel && names.includes(sel) ? sel : names[0] ?? ''
   const hist = exName ? exerciseHistory(state.sessions, exName) : []
+  const reference = exName ? referenceFor(exName) : null
+  const latestE1rm = hist.length ? hist[hist.length - 1].e1rm : null
 
   const thisWeek = mondayOf(todayStr())
   const [off, setOff] = useState(0)
@@ -54,59 +60,61 @@ export default function Progress() {
   return (
     <>
       <header className="top">
-        <h1>Progress</h1>
+        <h1>{t('Progress')}</h1>
       </header>
 
-      <h2 className="sec">Strength</h2>
+      <h2 className="sec">{t('Strength')}</h2>
       <div className="card">
         {names.length === 0 ? (
-          <div className="muted">Finish a workout with weighted sets to see charts.</div>
+          <div className="muted">{t('Finish a workout with weighted sets to see charts.')}</div>
         ) : (
           <>
             <select className="wideinput" value={exName} onChange={(e) => setSel(e.target.value)}>
               {names.map((n) => (
-                <option key={n}>{n}</option>
+                <option key={n} value={n}>{t(n)}</option>
               ))}
             </select>
             <LineChart
               series={[
-                { label: 'Top weight', color: 'var(--accent)', points: hist.map((h) => ({ x: new Date(h.date).getTime(), y: h.topWeight })) },
-                { label: 'Est. 1RM', color: 'var(--info)', points: hist.map((h) => ({ x: new Date(h.date).getTime(), y: Math.round(h.e1rm * 10) / 10 })) },
+                { label: t('Top weight'), color: 'var(--accent)', points: hist.map((h) => ({ x: new Date(h.date).getTime(), y: h.topWeight })) },
+                { label: t('Est. 1RM'), color: 'var(--info)', points: hist.map((h) => ({ x: new Date(h.date).getTime(), y: Math.round(h.e1rm * 10) / 10 })) },
               ]}
             />
-            <div className="muted sm">Estimated 1RM uses Epley: weight × (1 + reps/30), best set per session.</div>
+            <div className="muted sm">{t('Estimated 1RM uses Epley: weight × (1 + reps/30), best set per session.')}</div>
+            <div className="eyebrow refhead">{t('Reference')}</div>
+            {reference ? <ReferenceBar reference={reference} e1rm={latestE1rm} /> : <div className="muted sm">{t('No reference available for this exercise.')}</div>}
           </>
         )}
       </div>
 
-      <h2 className="sec">Weekly volume</h2>
+      <h2 className="sec">{t('Weekly volume')}</h2>
       <div className="card">
         <div className="row between">
-          <button className="pillbtn icon" onClick={() => setOff(off - 1)} aria-label="Previous week">
+          <button className="pillbtn icon" onClick={() => setOff(off - 1)} aria-label={t('Previous week')}>
             <IconChevronLeft />
           </button>
           <b>
             {fmtShort(ws)} – {fmtShort(addDays(ws, 6))}
-            {off === 0 ? ' (this week)' : ''}
+            {off === 0 ? ` ${t('(this week)')}` : ''}
           </b>
-          <button className="pillbtn icon" onClick={() => setOff(Math.min(0, off + 1))} disabled={off === 0} aria-label="Next week">
+          <button className="pillbtn icon" onClick={() => setOff(Math.min(0, off + 1))} disabled={off === 0} aria-label={t('Next week')}>
             <IconChevronRight />
           </button>
         </div>
         {MUSCLES.map((m) => (
           <div className="volrow" key={m}>
-            <span>{m}</span>
+            <span>{t(muscleKey(m))}</span>
             <div className="bar">
               <div style={{ width: `${(vol[m].sets / maxSets) * 100}%` }} />
             </div>
             <span className="muted">
-              {vol[m].sets} sets{vol[m].tonnage ? ` · ${Math.round(vol[m].tonnage).toLocaleString()} kg` : ''}
+              {t('{n} sets', { n: vol[m].sets })}{vol[m].tonnage ? ` · ${Math.round(vol[m].tonnage).toLocaleString(lang)} kg` : ''}
             </span>
           </div>
         ))}
       </div>
 
-      <h2 className="sec">Adherence</h2>
+      <h2 className="sec">{t('Adherence')}</h2>
       <div className="card">
         {adherence.map((a) => (
           <div className="volrow" key={a.w}>
@@ -115,36 +123,38 @@ export default function Progress() {
               <div style={{ width: `${Math.min(1, a.lift / 4) * 100}%` }} />
             </div>
             <span className="muted">
-              Lift {a.lift}/4 · Cardio {a.cardio}
+              {t('Lift {a}/4 · Cardio {b}', { a: a.lift, b: a.cardio })}
             </span>
           </div>
         ))}
       </div>
 
-      <h2 className="sec">Body weight</h2>
+      <h2 className="sec">{t('Body weight')}</h2>
       <div className="card">
         <div className="grid3">
           <label className="field">
-            Date
+            {t('Date')}
             <input type="date" value={bwDate} onChange={(e) => setBwDate(e.target.value)} />
           </label>
           <label className="field">
             kg
-            <input type="number" inputMode="decimal" step="0.1" value={bw} onChange={(e) => setBw(e.target.value)} placeholder="e.g. 91.4" />
+            <input type="number" inputMode="decimal" step="0.1" value={bw} onChange={(e) => setBw(e.target.value)} placeholder={t('e.g. 91.4')} />
           </label>
           <button className="btn primary" style={{ alignSelf: 'end' }} onClick={addWeight}>
-            Add
+            {t('Add')}
           </button>
         </div>
         {lastW && (
           <div className="muted">
-            Latest {lastW.kg} kg · {lastW.kg > target ? `${(lastW.kg - target).toFixed(1)} kg above` : `${(target - lastW.kg).toFixed(1)} kg below`} the {target} kg target
+            {lastW.kg > target
+              ? t('Latest {kg} kg · {d} kg above the {t} kg target', { kg: lastW.kg, d: (lastW.kg - target).toFixed(1), t: target })
+              : t('Latest {kg} kg · {d} kg below the {t} kg target', { kg: lastW.kg, d: (target - lastW.kg).toFixed(1), t: target })}
           </div>
         )}
         <LineChart
           series={[
-            { label: 'Body weight', color: 'var(--accent)', points: bwPoints },
-            { label: `Target ${target}`, color: 'var(--warn)', points: targetLine, dashed: true },
+            { label: t('Body weight'), color: 'var(--accent)', points: bwPoints },
+            { label: t('Target {n}', { n: target }), color: 'var(--warn)', points: targetLine, dashed: true },
           ]}
         />
         {[...weights].reverse().slice(0, 5).map((w) => (
@@ -152,7 +162,7 @@ export default function Progress() {
             <span>{fmtShort(w.date)}</span>
             <span>
               {w.kg} kg{' '}
-              <button className="pillbtn danger icon" onClick={() => update((s) => ({ ...s, weights: s.weights.filter((x) => x.id !== w.id) }))} aria-label="Delete">
+              <button className="pillbtn danger icon" onClick={() => update((s) => ({ ...s, weights: s.weights.filter((x) => x.id !== w.id) }))} aria-label={t('Delete')}>
                 <IconClose />
               </button>
             </span>

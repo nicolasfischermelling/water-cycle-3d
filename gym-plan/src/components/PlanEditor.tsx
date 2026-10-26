@@ -3,9 +3,11 @@ import { useStore } from '../store'
 import { defaultPlan, uid } from '../lib/defaults'
 import { MUSCLES, type ExerciseDef } from '../types'
 import { IconChevronDown, IconEdit, IconPlus } from './Icons'
+import { muscleKey, useT } from '../i18n'
 
 export default function PlanEditor() {
   const { state, update } = useStore()
+  const { t } = useT()
   const [open, setOpen] = useState<string | null>(null)
   const [edit, setEdit] = useState<string | null>(null)
 
@@ -17,23 +19,23 @@ export default function PlanEditor() {
   return (
     <>
       <header className="top">
-        <h1>Plan</h1>
+        <h1>{t('Plan')}</h1>
       </header>
-      <p className="muted">Tap a day, then an exercise to rename, swap, or change sets and rep range. Changes apply to future workouts.</p>
+      <p className="muted">{t('Tap a day, then an exercise to rename, swap, or change sets and rep range. Changes apply to future workouts.')}</p>
       {state.plan.map((day) => (
         <div className="card" key={day.id}>
           <button className="row between plain" onClick={() => setOpen(open === day.id ? null : day.id)}>
-            <span className="title">{day.name}</span>
+            <span className="title">{t(day.name)}</span>
             <span className="muted sm row gap0">
-              {day.exercises.length} exercises <IconChevronDown open={open === day.id} />
+              {t('{n} exercises', { n: day.exercises.length })} <IconChevronDown open={open === day.id} />
             </span>
           </button>
           {open === day.id && (
             <>
               <label className="field">
-                Day name
+                {t('Day name')}
                 <input
-                  value={day.name}
+                  value={t(day.name)}
                   onChange={(e) => update((s) => ({ ...s, plan: s.plan.map((d) => (d.id === day.id ? { ...d, name: e.target.value } : d)) }))}
                 />
               </label>
@@ -41,7 +43,7 @@ export default function PlanEditor() {
                 <div className="exrow" key={x.id}>
                   <button className="plain row between" onClick={() => setEdit(edit === x.id ? null : x.id)}>
                     <span>
-                      <b>{x.name || 'Unnamed'}</b>
+                      <b>{t(x.name) || t('Unnamed')}</b>
                       <span className="muted">
                         {' '}
                         · {x.sets}×{x.repMin === x.repMax ? x.repMax : `${x.repMin}–${x.repMax}`}
@@ -53,69 +55,69 @@ export default function PlanEditor() {
                   {edit === x.id && (
                     <div className="form">
                       <label className="field">
-                        Name
-                        <input value={x.name} onChange={(e) => patchEx(day.id, x.id, { name: e.target.value })} />
+                        {t('Name')}
+                        <input value={t(x.name)} onChange={(e) => patchEx(day.id, x.id, { name: e.target.value })} />
                       </label>
                       <div className="grid3">
                         <label className="field">
-                          Sets
+                          {t('Sets')}
                           <input type="number" inputMode="numeric" min={1} value={x.sets} onChange={(e) => patchEx(day.id, x.id, { sets: Math.max(1, Number(e.target.value) || 1) })} />
                         </label>
                         <label className="field">
-                          Min {x.timed ? 'sec' : 'reps'}
+                          {t('Min {u}', { u: x.timed ? t('sec') : t('reps') })}
                           <input type="number" inputMode="numeric" min={1} value={x.repMin} onChange={(e) => patchEx(day.id, x.id, { repMin: Math.max(1, Number(e.target.value) || 1) })} />
                         </label>
                         <label className="field">
-                          Max {x.timed ? 'sec' : 'reps'}
+                          {t('Max {u}', { u: x.timed ? t('sec') : t('reps') })}
                           <input type="number" inputMode="numeric" min={1} value={x.repMax} onChange={(e) => patchEx(day.id, x.id, { repMax: Math.max(1, Number(e.target.value) || 1) })} />
                         </label>
                       </div>
                       <div className="grid3">
                         <label className="field">
-                          Type
+                          {t('Type')}
                           <select value={x.kind} onChange={(e) => patchEx(day.id, x.id, { kind: e.target.value as ExerciseDef['kind'] })}>
-                            <option value="compound">Compound (2 min rest)</option>
-                            <option value="isolation">Isolation (90 s rest)</option>
+                            <option value="compound">{t('Compound (2 min rest)')}</option>
+                            <option value="isolation">{t('Isolation (90 s rest)')}</option>
                           </select>
                         </label>
                         <label className="field">
-                          Muscle
+                          {t('Muscle')}
                           <select value={x.muscle} onChange={(e) => patchEx(day.id, x.id, { muscle: e.target.value as ExerciseDef['muscle'] })}>
                             {MUSCLES.map((m) => (
-                              <option key={m}>{m}</option>
+                              <option key={m} value={m}>{t(muscleKey(m))}</option>
                             ))}
                           </select>
                         </label>
                         <label className="field">
-                          Region
+                          {t('Region')}
                           <select value={x.region} onChange={(e) => patchEx(day.id, x.id, { region: e.target.value as ExerciseDef['region'] })}>
-                            <option value="upper">Upper (+2.5 kg)</option>
-                            <option value="lower">Lower (+5 kg)</option>
+                            <option value="upper">{t('Upper (+2.5 kg)')}</option>
+                            <option value="lower">{t('Lower (+5 kg)')}</option>
                           </select>
                         </label>
                       </div>
                       <label className="check">
                         <input type="checkbox" checked={!!x.timed} onChange={(e) => patchEx(day.id, x.id, { timed: e.target.checked })} />
-                        <span>Timed hold (reps are seconds)</span>
+                        <span>{t('Timed hold (reps are seconds)')}</span>
                       </label>
                       <label className="field">
-                        Note
-                        <input value={x.note ?? ''} onChange={(e) => patchEx(day.id, x.id, { note: e.target.value })} />
+                        {t('Note')}
+                        <input value={x.note ? t(x.note) : ''} onChange={(e) => patchEx(day.id, x.id, { note: e.target.value })} />
                       </label>
                       <div className="row gap">
                         <button className="pillbtn" disabled={i === 0} onClick={() => patchDay(day.id, (xs) => swap(xs, i, i - 1))}>
-                          Move up
+                          {t('Move up')}
                         </button>
                         <button className="pillbtn" disabled={i === day.exercises.length - 1} onClick={() => patchDay(day.id, (xs) => swap(xs, i, i + 1))}>
-                          Move down
+                          {t('Move down')}
                         </button>
                         <button
                           className="pillbtn danger"
                           onClick={() => {
-                            if (confirm(`Remove ${x.name}?`)) patchDay(day.id, (xs) => xs.filter((y) => y.id !== x.id))
+                            if (confirm(t('Remove {name}?', { name: t(x.name) }))) patchDay(day.id, (xs) => xs.filter((y) => y.id !== x.id))
                           }}
                         >
-                          Remove
+                          {t('Remove')}
                         </button>
                       </div>
                     </div>
@@ -128,12 +130,12 @@ export default function PlanEditor() {
                   const id = uid()
                   patchDay(day.id, (xs) => [
                     ...xs,
-                    { id, name: 'New exercise', sets: 3, repMin: 8, repMax: 12, kind: 'isolation', muscle: 'Chest', region: day.focus },
+                    { id, name: t('New exercise'), sets: 3, repMin: 8, repMax: 12, kind: 'isolation', muscle: 'Chest', region: day.focus },
                   ])
                   setEdit(id)
                 }}
               >
-                <IconPlus /> Add exercise
+                <IconPlus /> {t('Add exercise')}
               </button>
             </>
           )}
@@ -142,10 +144,10 @@ export default function PlanEditor() {
       <button
         className="btn ghost wide"
         onClick={() => {
-          if (confirm('Reset all four days to the original plan? Logged history is kept.')) update((s) => ({ ...s, plan: defaultPlan() }))
+          if (confirm(t('Reset all four days to the original plan? Logged history is kept.'))) update((s) => ({ ...s, plan: defaultPlan() }))
         }}
       >
-        Reset plan to original
+        {t('Reset plan to original')}
       </button>
     </>
   )
