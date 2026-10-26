@@ -54,6 +54,7 @@ const ES: Record<string, string> = {
   Session: 'Sesión',
   'Warm-up': 'Calentamiento',
   'No sets are checked. Discard this workout?': 'No hay series marcadas. ¿Descartar este entrenamiento?',
+  'Replace the workout in progress? Its logged sets will be lost.': '¿Reemplazar el entrenamiento en curso? Se perderán las series registradas.',
   'Finish workout and save it?': '¿Terminar y guardar el entrenamiento?',
   'Discard this workout? Nothing will be saved.': '¿Descartar este entrenamiento? No se guardará nada.',
   'Finish workout': 'Terminar entrenamiento',
